@@ -44,6 +44,29 @@
             <span>Set Sender Name</span></a>
     </li>
 
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+
+    {% if dashboard_user.is_superuser %}
+    <!-- Heading -->
+    <div class="sidebar-heading">
+        Create and Send Mail
+    </div>
+
+    <!-- Nav Item - Pages Collapse Menu -->
+    <li class="nav-item">
+        <a class="nav-link" href="#">
+            <i class="fas fa-fw fa-envelope-open"></i>
+            <span>Email Template</span></a>
+        <a class="nav-link" href="{% url 'mail_send' %}">
+            <i class="fas fa-fw fa-location-arrow"></i>
+            <span>Send Email</span></a>
+        <a class="nav-link" href="#">
+            <i class="fas fa-fw fa-file-upload"></i>
+            <span>Upload Attachment</span></a>
+    </li>
+    {% endif %}
+
     <hr class="sidebar-divider">
     <div class="sidebar-heading">
         Gmail Filters

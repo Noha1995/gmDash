@@ -36,15 +36,30 @@ App authentication/authorization, Add/Remove filters, update Vacations Setting, 
         * Users in ADMIN, USERA and Staff can login to ones' accounts in USERB group.
         
 ## Change History
-- __2020-03-26__
-    * Prototype app for a cron job.
-        * Use django_cron
-- __2019-11-25__
+- __2019-03-26__
     * Add Searchbox.
         * Page Vacation Multipe Setting
         * Page Add Filter
         * Page Set Sender Name
-     
+    * Change Comment Style
+        ```
+        """Description Text
+        
+        Args - Arguments Part
+            arg1: argument description
+            
+        Returns - Returns Part
+            arg1: return value description
+        """
+        ```
+- __2019-11-25__
+    * Prototype app for a cron job.
+        * Use django_cron
+        
+          ``` 
+            py manage.py runcrons --force 
+          ```
+        * Use crontab?
 - __2019-11-24__
     * Permission management on dashboard
     * Fix a bug on deletion of the bulk messages.
