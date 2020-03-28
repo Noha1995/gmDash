@@ -1,0 +1,18 @@
+.login-body{
+	margin-top: 200px;
+}
+
+.alert ul{
+	margin-bottom: 0px;
+}
+#flash-messages{
+	max-height: 300px;
+	overflow-y: auto;
+}
+.sidebar .nav-item .nav-link {
+	padding: 0.6rem 0.5rem;
+}
+form input.fc-check{
+	display: inline;
+	width: 25px !important;
+}
