@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Gmail Vacation Settings{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            Gmail Vacation Setting
+            {% if filters %}
+                ({{ filters | length }})
+            {% else %}
+
+            {% endif %}
+        </h1>
+        <a href="{% url 'mail_filter_add' %}"
+           class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-download fa-sm text-white-50"></i> Add
+        </a>
+    </div>
+    <div class="card shadow">
+        <div class="card shadow mb-2">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <form role="form" class="form-inline" method="post"
+                              action="{% url 'mail_vacation_settings' %}">{% csrf_token %}
+                            <label for="zone" class="mr-sm-2">Email: </label>
+                            <select name="selected_email" id="selected_email" class="form-control mr-sm-3" >
+                                <option></option>
+                                {% for account in accounts %}
+                                    <option value="{{ account.email }}"
+                                            {% if account.email == selected_email %}
+                                            selected="selected"
+                                            {% endif %}
+                                    >{{ account.email }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary mr-4"><i class="fa fa-search"></i> Search
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-warning">
+                {{ form.errors }}
+            </div>
+            {% endif %}
+            <form role="form" class="user" method="post" action="{% url 'mail_vacation_settings_update' %}">
+                {% csrf_token %}
+                <input type="hidden" value="{{ selected_email }}" name="selected_email">
+                <div class="form-group row">
+                    <label for="enableAutoReply" class="offset-2 col-sm-2 col-form-label">Vacation Responder On/Off</label>
+                    <div class="col-sm-6">
+                        <select id="enableAutoReply" name="enableAutoReply" class="form-control" required="" >
+                            <option value="True" {% if vacation and vacation.enableAutoReply == True %}selected{% endif %}>On</option>
+                            <option value="False" {% if vacation and vacation.enableAutoReply == False %}selected{% endif %}>Off</option>
+                        </select>
+
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="startTime" class="offset-2 col-sm-2 col-form-label">First Day</label>
+                    <div class="col-sm-6">
+                        <input type="date" name="startTime" class="form-control" required="" id="startTime" {% if vacation and vacation.startTime %}value="{{ vacation.startTime }}"{% endif %}>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="endTime" class="offset-2 col-sm-2 col-form-label">Last Day</label>
+                    <div class="col-sm-6">
+                        <input type="date" name="endTime" class="form-control" id="endTime" {% if vacation and vacation.endTime %}value="{{ vacation.endTime }}"{% endif %}>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="responseSubject" class="offset-2 col-sm-2 col-form-label">Subject</label>
+                    <div class="col-sm-6">
+                        <input type="text" name="responseSubject" maxlength="100" class="form-control" id="responseSubject" {% if vacation and vacation.responseSubject %}value="{{ vacation.responseSubject }}"{% endif %}>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="responseBodyHtml" class="offset-2 col-sm-2 col-form-label">Message</label>
+                    <div class="col-sm-6">
+                        <textarea type="text" name="responseBodyHtml" class="form-control" required="" id="responseBodyHtml" >{% if vacation and vacation.responseBodyHtml %}{{ vacation.responseBodyHtml }}{% endif %}</textarea>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="restrictToContacts" class="offset-2 col-sm-2 col-form-label">
+                    </label>
+                    <div class="col-sm-6">
+                        <input type="checkbox" name="restrictToContacts" class="" id="restrictToContacts" {% if vacation and vacation.restrictToContacts %}checked{% endif %}>
+                        Only send a response to people in my Contacts
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="offset-4"></label>
+                    <div class="col-sm-6">
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> Save</button>
+                        <a href="" class="btn btn-light pull-right">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#confirm-delete').on('show.bs.modal', function (e) {
+                $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+            });
+        });
+    </script>
+    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    Delete the filter
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete?
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-danger btn-ok">Delete</a>
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Users List{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Users List</h1>
+    </div>
+
+    <div class="card shadow mb-2">
+        <div class="card-body">
+            <form role="form" class="user form-inline" id="form-delete-message" method="post">{% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <td width="50" class="text-center">No</td>
+                            <th class="text-center">User ID</th>
+                            <th class="text-center">User Name</th>
+                            <th class="text-center">Email</th>
+                            <th class="text-center">-</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        {% for u in users %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td class="text-center">
+                                    {{ u.username }}
+                                </td>
+                                <td class="text-center">
+                                    {{ u.first_name }} {{ u.last_name }}
+                                </td>
+                                <td class="text-center">
+                                    {{ u.email }}
+                                </td>
+                                <td class="text-center">
+                                    <a href="agent_login/{{ u.username }}"
+                                       data-href=""
+                                       class=""
+                                    >
+                                        Login
+                                    </a>
+                                    {% comment %}{% if user.is_superuser %}
+                                        |
+                                        <a href="#"
+                                           data-href="mail_account_delete/{{ account.id }}"
+                                           class="btn btn-danger btn-circle btn-sm btn-del"
+                                           data-toggle="modal"
+                                           data-target="#confirm-delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    {% endif %}{% endcomment %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <script>
+            $(document).ready(function () {
+                {% comment %}$('#btn-delete-inbox').click(function(e){
+                    e.preventDefault();
+                    $('#confirm-message-delete').modal();
+                });
+                $('#confirm-message-delete .btn-ok').click(function(e){
+                    e.preventDefault();
+                    $("#form-delete-message").submit();
+                });
+
+
+                $('#confirm-delete').on('show.bs.modal', function (e) {
+                    $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+                });
+                $(".btn-reset").click(function (e) {
+                    let form = $(this).closest('form');
+                    form.find('#search_keyword').val('');
+                    form.submit();
+                });{% endcomment %}
+            });
+        </script>
+        <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Delete the registered mail on the system
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete?
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-danger btn-ok">Delete</a>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="confirm-message-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Delete all messages from inbox
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete all messages?
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-danger btn-ok" href="#">Delete All</a>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

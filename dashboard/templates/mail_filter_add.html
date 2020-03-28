@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Filter{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Add New Filter</h1>
+    </div>
+
+    <form role="form" class="user filter-add-form" method="post" action="{% url 'mail_filter_add' %}">{% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card m-0">
+                    <div class="card-header">
+                        Criteria
+                    </div>
+                    <div class="card-body">
+                        {% for field in criteria %}
+                            <div class="form-group row">
+                                <label for="{{ field.id_for_label }}"
+                                       class="col-sm-4 col-form-label">{{ field.label }}</label>
+                                <div class="col-sm-8">
+                                    {{ field }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card m-0">
+                    <div class="card-header">
+                        Action
+                    </div>
+                    <div class="card-body">
+                        {% for field in action %}
+                            <div class="form-group row">
+                                {{ field }}
+                                <label for="{{ field.id_for_label }}"
+                                       class="col-form-label ml-3">{{ field.label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card m-0">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-md-6" style="display: flex">
+                                <label class="col-form-label ml-3">Apply To:</label>
+                                <input type="checkbox" name="apply_all" id="apply_all" value="1"
+                                       class="form-control fc-check ml-5"/>
+                                <label for="apply_all" class="col-form-label ml-3">Select All</label>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="float-right">
+                                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-save"></i>
+                                        Submit
+                                    </button>
+                                    <a href="{% url 'mail_filters' %}"
+                                       class="btn btn-light btn-sm pull-right">Cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" class="invisible" id="filter_by_email" name="filter_by_email" value=0>
+                        <div class="row mt-5">
+                            <div class="col-md-6">
+                                <textarea class="form-control" id="filter_emails" name="filter_emails">{{ filter_emails }}</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-primary btn-sm btn-email-search"><i class="fa fa-search"></i>
+                                    Search
+                                </button>
+                                <a href="#"
+                                       class="btn btn-light btn-sm pull-right btn-clear-search"><i class="fa fa-minus-circle"></i>Reset</a>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="card-body" id="emails_wrap">
+                        <div class="row">
+                            {% for account in accounts %}
+                                <div class="col-md-4">
+                                    <div class="form-group row ml-1">
+                                        <input type="checkbox"
+                                               class="form-control fc-check"
+                                               name="emails_applied[]"
+                                               id="e_{{ account.email }}"
+                                               value="{{ account.email }}"
+                                        />
+                                        <label for="e_{{ account.email }}"
+                                               class="col-form-label ml-3">{{ account.email }}</label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+<script>
+    $(document).ready(function () {
+      $('.btn-email-search').on('click', function (e) {
+        $('#filter_by_email').val(1);
+        $('form').submit();
+      });
+      $('.btn-set-sender').on('click', function (e) {
+        $('#filter_by_email').val(0);
+        $('form').submit();
+      });
+      $('.btn-clear-search').on('click', function (e) {
+        $('#filter_by_email').val(1);
+        $('#filter_emails').html('');
+        $('form').submit();
+      });
+    })
+</script>
+{% endblock %}

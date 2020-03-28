@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Gmail Filters List{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            Gmail Filters List
+            {% if filters %}
+                ({{ filters | length }})
+            {% else %}
+            {% endif %}
+        </h1>
+        <a href="{% url 'mail_filter_add' %}"
+           style="margin-left: auto;"
+           class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mr-3">
+            <i class="fas fa-plus-circle fa-sm text-white-50"></i> Add
+        </a>
+        <a href="#"
+           id="delete-all"
+           class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm">
+            <i class="fas fa-trash-alt fa-sm text-white-50"></i> Delete All
+        </a>
+    </div>
+    <div class="card shadow">
+        <div class="card shadow mb-2">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <form role="form" class="form-inline" method="post"
+                              action="{% url 'mail_filters' %}">{% csrf_token %}
+                            <label for="zone" class="mr-sm-2">Email: </label>
+                            <select name="selected_email" id="selected_email" class="form-control mr-sm-3">
+                                <option></option>
+                                {% for account in accounts %}
+                                    <option value="{{ account.email }}"
+                                            {% if account.email == selected_email %}
+                                            selected="selected"
+                                            {% endif %}
+                                    >{{ account.email }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary mr-4"><i class="fa fa-search"></i> Search
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form role="form" class="form-inline" id="data-form" method="post" action="{% url 'mail_filter_delete_all' %}">{% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th class="text-center">ID</th>
+                            <th class="text-center">Criteria</th>
+                            <th class="text-center">Action</th>
+                            <th class="text-center" width="100">-</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for filter in filters %}
+                            <tr>
+                                <td class="text-center">
+                                    {{ filter.id | slice:"0:15" }} ...
+                                </td>
+                                <td class="text-center zone-label" data-zone="" contenteditable="false">
+                                    {{ filter.criteria | pprint }}
+                                </td>
+                                <td class="text-center zone-label" data-zone="" contenteditable="false">
+                                    {{ filter.action | pprint }}
+                                </td>
+                                <td class="text-center">
+                                    <a href="#"
+                                       class="btn btn-primary btn-circle btn-sm btn-copy"
+                                       data-filter_id="{{ filter.id }}"
+                                       title="Use this filter on the other accounts."
+                                    >
+                                        <i class="fas fa-copy"></i>
+                                    </a> |
+                                    <a href="#"
+                                       data-href="mail_filter_delete/{{ filter.id }}"
+                                       class="btn btn-danger btn-circle btn-sm btn-del"
+                                       data-toggle="modal"
+                                       data-target="#confirm-delete"
+                                       title="Remove this filter."
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    <textarea style="display: none" id="fd_{{ filter.id }}" name="filters[]">{{ filter }}</textarea>
+                                    <input type="hidden" id="fdid_{{ filter.id }}" name="filter_ids[]" value="{{ filter.id }}"/>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+    <form role="form" class="form-inline" id="copy-form" method="post" action="{% url 'mail_filter_copy' %}">{% csrf_token %}
+        <input type="hidden" id="copied_email" name="copied_email" value="{{ selected_email }}"/>
+        <textarea style="display: none" id="copied_filter" name="copied_filter"></textarea>
+    </form>
+    <script>
+        $(document).ready(function () {
+            $('#confirm-delete').on('show.bs.modal', function (e) {
+                $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+            });
+
+            $("#delete-all").click(function (e) {
+                e.preventDefault();
+                $("#confirm-delete-all").modal();
+            });
+
+            $("#confirm-delete-all .btn-ok").click(function (e) {
+                e.preventDefault();
+                $("#data-form").submit();
+            })
+
+            $('.btn-copy').click(function () {
+                var id = $(this).data('filter_id');
+                $('#copied_filter').val($("#fd_" + id).val());
+                $("#copy-form").submit();
+            });
+
+        });
+    </script>
+    <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    Delete the filter
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete?
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-danger btn-ok">Delete</a>
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirm-delete-all" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    Delete all filters
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete all filters?
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-danger btn-ok" href="#">Delete All</a>
+                    <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

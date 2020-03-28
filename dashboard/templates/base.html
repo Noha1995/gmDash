@@ -1,0 +1,147 @@
+{% load staticfiles %}
+{% load admin_urls %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>{% block title %} GMail Administration{% endblock %}</title>
+
+    {% block css_lib %}
+        <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-free/css/all.min.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'theme/css/sb-admin-2.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'datatables/dataTables.bootstrap4.min.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+    {% endblock css_lib %}
+
+    <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
+    {% block js_lib %}{% endblock %}
+</head>
+<body>
+<!-- Page Wrapper -->
+<div id="wrapper">
+    {% block sidebar %}
+        {% include 'sidebar.html' %}
+    {% endblock %}
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+        <!-- Main Content -->
+        <div id="content">
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                <!-- Sidebar Toggle (Topbar) -->
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                    <li class="nav-item dropdown no-arrow d-sm-none">
+                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <!-- Dropdown - Messages -->
+                        <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                             aria-labelledby="searchDropdown">
+                            <form class="form-inline mr-auto w-100 navbar-search">
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light border-0 small"
+                                           placeholder="Search for..." aria-label="Search"
+                                           aria-describedby="basic-addon2">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="button">
+                                            <i class="fas fa-search fa-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </li>
+                    {% if agent_user %}
+                        <div class="topbar-divider d-none d-sm-block"></div>
+                        <li class="nav-item">
+                            <a class="nav-link " href="#">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                                    <span class="agent-user"><strong>{{ agent_user.username }}</strong> ({{ agent_user.first_name }})</span>
+                                </span>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <div class="topbar-divider d-none d-sm-block"></div>
+
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                                {{ user.username }}
+                            </span>
+                            <img class="img-profile rounded-circle" src="{% static "theme/img/default.jpg" %}">
+                        </a>
+                        <!-- Dropdown - User Information -->
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                             aria-labelledby="userDropdown">
+                            {% if request.user.is_staff %}
+                                <a class="dropdown-item"
+                                   target="_blank"
+                                   href="{% url 'admin:index' %}">
+                                    <i class="fas fa-solar-panel fa-sm fa-fw mr-2 text-gray-400"></i> Admin Panel
+                                </a>
+                            {% endif %}
+                            {% if agent_user %}
+                                <a class="dropdown-item" href="{% url 'agent_logout' %}">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i> Logout Agent "{{ agent_user.username }}"
+                                </a>
+                            {% endif %}
+                            <a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i> Logout
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+                {% if messages %}
+                    <div id="flash-messages" class="mb-3">
+                        {% for msg in messages %}
+                            <div class="alert alert-{% if msg.level_tag == 'error' %}danger{% else %}{{ msg.level_tag }}{% endif %} alert-dismissable">
+                                {% autoescape off %}
+                                    {{ msg.message }}
+                                {% endautoescape %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %} {% endblock %}
+            </div>
+        </div>
+        <!-- End of Main Content -->
+
+        {% block footer %}
+            {% include 'footer.html' %}
+        {% endblock %}
+    </div>
+    <!-- End of Content Wrapper -->
+</div>
+
+<script type="text/javascript" src="{% static 'bootstrap4/js/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'jquery-easing/jquery.easing.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'theme/js/sb-admin-2.min.js' %}"></script>
+
+<script type="text/javascript" src="{% static 'datatables/jquery.dataTables.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'global.js' %}"></script>
+
+</body>
+</html>

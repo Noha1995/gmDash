@@ -1,0 +1,27 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <title>{% block title %} GMail Administration{% endblock %}</title>
+
+    {% block css_lib %}
+        <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-free/css/all.min.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'theme/css/sb-admin-2.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'datatables/dataTables.bootstrap4.min.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+    {% endblock css_lib %}
+
+    <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
+    {% block js_lib %}{% endblock %}
+</head>
+<body class="bg-gradient-primary">
+<div class="container">
+    {% block content %} {% endblock %}
+</div>
+<script type="text/javascript" src="{% static 'bootstrap4/js/bootstrap.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'jquery-easing/jquery.easing.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'theme/js/sb-admin-2.min.js' %}"></script>
+</body>
+</html>
