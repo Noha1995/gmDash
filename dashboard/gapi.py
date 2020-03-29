@@ -20,7 +20,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import mimetypes
 import os
-
+import time
 from apiclient import errors
 from django.contrib import messages
 log = logging.getLogger('django')
@@ -468,8 +468,12 @@ class GapiUsersMessages(GapiWrap):
         gmail_service = build_service(credentials)
         success_cnt = 0
         fail_cnt = 0
+        cnt = 0
         for user_id in to_emails:
-
+            cnt += 1
+            if cnt >= 200:
+                cnt = 0
+                time.sleep(1)
             try:
                 message_text = GapiUsersMessages.create_message(sender, user_id.strip(), subject, message_data)
                 message = (gmail_service.users().messages().send(userId=sender, body=message_text)
@@ -501,6 +505,7 @@ class GapiUsersMessages(GapiWrap):
 
         if fail_cnt > 0:
             messages.error(request, 'Failed to send message from %s.' % sender)
+        print(success_cnt, fail_cnt, cnt)
         return results
 
     @staticmethod

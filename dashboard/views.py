@@ -1077,8 +1077,8 @@ def mail_send(request):
         else:
             emails_applied = request.POST.getlist('emails_applied[]')
             to_emails = request.POST.get('to_email')
-            #to_emails = to_emails.strip().split(',')
-            to_emails = to_emails.strip().splitlines()
+            to_emails = to_emails.strip().split(',')
+            #to_emails = to_emails.strip().splitlines()
             subject = request.POST.get('subject')
             message = request.POST.get('message')
             if len(emails_applied) < 1 or subject == '' or len(to_emails) < 1 or message == '':
