@@ -498,13 +498,15 @@ class GapiUsersMessages(GapiWrap):
                 messages.error(request, 'Failed to Send message to %s: %s' %
                                (user_id, error.__str__()))
                 print('An error occurred on %s: %s' % (user_id, error))
+            except Exception as e:
+                print(e)
 
         if success_cnt > 0:
-            messages.success(request, 'Send message emails from %s successfully.' %
-                sender)
+            messages.success(request, 'Send message emails from %s successfully: %s' %
+                             (sender, str(success_cnt)))
 
         if fail_cnt > 0:
-            messages.error(request, 'Failed to send message from %s.' % sender)
+            messages.error(request, 'Failed to send message from %s: %s' % (sender, str(fail_cnt)))
         print(success_cnt, fail_cnt, cnt)
         return results
 
