@@ -1077,7 +1077,8 @@ def mail_send(request):
         else:
             emails_applied = request.POST.getlist('emails_applied[]')
             to_emails = request.POST.get('to_email')
-            to_emails = to_emails.strip().splitlines()
+            to_emails = to_emails.strip().split(',')
+            #to_emails = to_emails.strip().splitlines()
             subject = request.POST.get('subject')
             message = request.POST.get('message')
             if len(emails_applied) < 1 or subject == '' or len(to_emails) < 1 or message == '':
@@ -1090,24 +1091,16 @@ def mail_send(request):
                 if request == '':
                     messages.error(request, "Please input message.")
             else:
-                success_cnt = 0
-                fail_cnt = 0
+
                 for email in emails_applied:
-                    success_cnt = 0
-                    fail_cnt = 0
                     account = MailAccount.objects.filter(email=email).first()
                     if account and account.user_id:
                         credentials = gapi.get_stored_credentials(account.user_id)
                         if credentials and credentials.refresh_token is not None:
                             try:
-                                result = gapi.GapiUsersMessages.send(credentials, email, to_emails, subject, message)
-                                if result and result.get('displayName'):
-                                    success_cnt += 1
-                                else:
-                                    fail_cnt += 1
+                                result = gapi.GapiUsersMessages.send(request, credentials, email, to_emails, subject, message)
                             except HttpError as e:
                                 log.error(e.__str__())
-                                fail_cnt += 1
                                 resp_str = e.content.decode(encoding="utf-8")
                                 error = json.loads(resp_str)
                                 error = error.get('error')
@@ -1123,20 +1116,13 @@ def mail_send(request):
                                 log.error("Failed to send message on %s. Details: %s" % (account.email, str(e1)))
                                 show_invalid_access_token(request, account.email, account.id)
                         else:
-                            fail_cnt += 1
                             show_no_credential_msg(account.email, account.id)
                             log.error('no credential for %s' % account.email)
                     else:
-                        fail_cnt += 1
                         show_no_credential_msg(account.email, account.id)
                         log.error('no credential for %s' % account.email)
 
-                    if success_cnt > 0:
-                        messages.success(request, 'Send message emails from %s successfully.' % (
-                        email))
 
-                    if fail_cnt > 0:
-                        messages.error(request, 'Failed to send message from %s.' % email)
 
     context['accounts'] = accounts
 

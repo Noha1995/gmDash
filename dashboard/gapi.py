@@ -22,7 +22,7 @@ import mimetypes
 import os
 
 from apiclient import errors
-
+from django.contrib import messages
 log = logging.getLogger('django')
 
 # Path to client_secrets.json which should contain a JSON document such as:
@@ -452,7 +452,7 @@ class GapiUsersMessages(GapiWrap):
         return {'raw': base64.urlsafe_b64encode(message.as_string())}
 
     @staticmethod
-    def send(credentials, sender, to_emails, subject, message):
+    def send(request, credentials, sender, to_emails, subject, message_data):
         """Send an email message.
 
         Args:
@@ -464,22 +464,44 @@ class GapiUsersMessages(GapiWrap):
         Returns:
           Sent Message.
         """
-        messages = []
+        results = []
         gmail_service = build_service(credentials)
-
+        success_cnt = 0
+        fail_cnt = 0
         for user_id in to_emails:
-            message_text = GapiUsersMessages.create_message(sender, user_id, subject, message)
+
             try:
+                message_text = GapiUsersMessages.create_message(sender, user_id.strip(), subject, message_data)
                 message = (gmail_service.users().messages().send(userId=sender, body=message_text)
                            .execute())
 
                 print('Message Id: %s' % message['id'])
-                messages.append(message)
+                results.append(message)
+                if message and message.get('id'):
+                    messages.success(request, 'Sent message to %s successfully.' %
+                                     user_id)
+                    log.info('Sent message to %s successfully.' %
+                                     user_id)
+                    success_cnt += 1
+                else:
+                    fail_cnt += 1
+                    messages.error(request, 'Failed to Send message to %s.' %
+                                     user_id)
+                    log.error('Failed to Send message to %s.' %
+                                     user_id)
             except errors.HttpError as error:
+                fail_cnt += 1
+                messages.error(request, 'Failed to Send message to %s: %s' %
+                               (user_id, error.__str__()))
                 print('An error occurred on %s: %s' % (user_id, error))
-                return 0
 
-        return messages
+        if success_cnt > 0:
+            messages.success(request, 'Send message emails from %s successfully.' %
+                sender)
+
+        if fail_cnt > 0:
+            messages.error(request, 'Failed to send message from %s.' % sender)
+        return results
 
     @staticmethod
     def list():
