@@ -469,9 +469,11 @@ class GapiUsersMessages(GapiWrap):
         success_cnt = 0
         fail_cnt = 0
         cnt = 0
+        num = 0
         for user_id in to_emails:
+            num += 1
             cnt += 1
-            if cnt >= 200:
+            if cnt >= 4:
                 cnt = 0
                 time.sleep(1)
             try:
@@ -479,24 +481,26 @@ class GapiUsersMessages(GapiWrap):
                 message = (gmail_service.users().messages().send(userId=sender, body=message_text)
                            .execute())
 
-                print('Message Id: %s' % message['id'])
+                print('Message Id: %s, Num: %s' % (message['id'], num))
                 results.append(message)
                 if message and message.get('id'):
-                    messages.success(request, 'Sent message to %s successfully.' %
-                                     user_id)
-                    log.info('Sent message to %s successfully.' %
-                                     user_id)
+                    messages.success(request, 'Sent message to %s successfully. Num: %s' %
+                                     (user_id, num))
+                    log.info('Sent message to %s successfully. Num: %s' %
+                             (user_id, num))
                     success_cnt += 1
                 else:
                     fail_cnt += 1
-                    messages.error(request, 'Failed to Send message to %s.' %
-                                     user_id)
-                    log.error('Failed to Send message to %s.' %
-                                     user_id)
+                    messages.error(request, 'Failed to Send message to %s. Num: %s' %
+                                   (user_id, num))
+                    log.error('Failed to Send message to %s. Num: %s' %
+                              (user_id, num))
             except errors.HttpError as error:
                 fail_cnt += 1
                 messages.error(request, 'Failed to Send message to %s: %s' %
                                (user_id, error.__str__()))
+                log.error('Failed to Send message to %s. Num: %s' %
+                          (user_id, num))
                 print('An error occurred on %s: %s' % (user_id, error))
             except Exception as e:
                 print(e)
