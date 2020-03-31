@@ -36,7 +36,16 @@ App authentication/authorization, Add/Remove filters, update Vacations Setting, 
         * Users in ADMIN, USERA and Staff can login to ones' accounts in USERB group.
         
 ## Change History
-- __2019-03-26__
+- __2020-03-31__
+    * Add Customer Email Data.
+        * Page Email Data List
+        * Page Add Email Data
+        * Page Send Email
+            * Change search by email address to the search by sender name.
+            * Change the message box to Text Editor.
+            * Add the sending check message function.
+        
+- __2020-03-26__
     * Add Searchbox.
         * Page Vacation Multipe Setting
         * Page Add Filter
