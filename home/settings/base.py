@@ -126,6 +126,7 @@ LOGIN_REDIRECT_URL = '/dashboard'
 LOGOUT_REDIRECT_URL = '/accounts/login'
 
 CLIENTSECRETS_BASE_PATH = os.path.join(BASE_DIR, 'api_credentials')
+EMAILDATA_BASE_PATH = os.path.join(BASE_DIR, 'email_data')
 CLIENTSECRETS_LOCATION = os.path.join(BASE_DIR, 'credentials.json')  # will not be used.
 
 GAPI_REDIRECT_URL = '/dashboard/gmail_auth_callback'

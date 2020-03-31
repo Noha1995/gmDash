@@ -13,10 +13,10 @@ from googleapiclient.errors import HttpError
 import logging
 
 from dashboard.gapi import GapiUsersMessages
-from dashboard.models import MailAccount, MailAccountUser, MailUserCredential
+from dashboard.models import MailAccount, MailAccountUser, MailUserCredential, CustomerMailData
 from dashboard.agent import GROUP_ADMIN, GROUP_USERA, GROUP_USERB, SKEY_AGENT
 from .forms import MailAccountForm, FilterActionForm, FilterCriteriaForm, MailAccountMultipleForm, \
-    MailUserCredentialForm
+    MailUserCredentialForm, CustomerMailDataForm
 from dashboard import gapi
 import time
 import datetime
@@ -87,33 +87,7 @@ def mail_accounts(request):
         accounts_qs = accounts_qs.filter(email__contains=search.get('keyword'))
     if user_id.get('keyword') and user_id.get('keyword') != '0':
         accounts_qs = accounts_qs.filter(mailaccountuser__user_id=user_id.get('keyword'))
-
-    print(accounts_qs.query)
-    # -----------------------------------------------------------
-    #       TEST
-    # -----------------------------------------------------------
-
-    # account = MailAccount.objects.filter(email='timimensenin@gmail.com').first()
-    # account = MailAccount.objects.filter(email='liki@gmail.com').first()
-    # if False and account:
-    #     if account.user_id:
-    #         credentials = gapi.get_stored_credentials(account.user_id)
-    #         if credentials and credentials.refresh_token is not None:
-    #             GapiUsersMessages.set_credential(credentials)
-    #             msg_list = GapiUsersMessages.list()
-    #             print(len(msg_list.get('messages')))
-    #             print(msg_list)
-    #
-    #             result = GapiUsersMessages.labels_get('INBOX')
-    #             print(result)
-    #
-    #             # threads_list = GapiUsersMessages.threads()
-    #             # print(len(threads_list.get('threads')))
-    #             # print(threads_list)
-
-    # -----------------------------------------------------------
     users = User.objects.all()
-    print(user_id.get('keyword'))
     return render(request, "mail_accounts.html", {
         'accounts': accounts_qs,
         'search': search,
@@ -1085,9 +1059,9 @@ def mail_send(request):
                     messages.error(request, "Please select an email account at least.")
                 if len(to_emails) < 1:
                     messages.error(request, "Please input the receiver emails.")
-                if request == '':
+                if subject == '':
                     messages.error(request, "Please input subject.")
-                if request == '':
+                if message == '':
                     messages.error(request, "Please input message.")
             else:
 
@@ -1126,6 +1100,7 @@ def mail_send(request):
     context['accounts'] = accounts
 
     return render(request, "mail_send.html", context)
+
 @login_required
 def api_credential(request):
     """
@@ -1323,3 +1298,143 @@ def agent_logout(request):
     request.session['selected_email'] = None
     messages.success(request, "You logged out from agent user")
     return redirect('index')
+
+@login_required
+def mail_data_add(request):
+    """Add the customer email address file.
+    Every emails are separated by linebreak in the file.
+    The user can select the file on 'Send Email' page.
+
+    Args:
+    Returns:
+    """
+    user = Agent.dashboard_user(request)
+
+    if request.method == 'POST':
+        form = CustomerMailDataForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            if 'email_data' in request.FILES:
+                customer_data = CustomerMailData.objects.create(user=user, email_data=request.FILES['email_data'].name,
+                                                                data_name=form.cleaned_data.get('data_name'))
+                folder = settings.EMAILDATA_BASE_PATH
+                uploaded_filename = str(customer_data.id) + "_" + request.FILES['email_data'].name
+
+                # create the folder if it doesn't exist.
+                try:
+                    # Checking the old file and remove it.
+                    if not os.path.exists(os.path.join(settings.BASE_DIR, folder)):
+                        os.mkdir(os.path.join(settings.BASE_DIR, folder))
+                except Exception as e:
+                    messages.error(request, e)
+                    log.error("[Email Data] %s" % e)
+
+                # save the uploaded file inside that folder.
+                full_filename = os.path.join(settings.BASE_DIR, folder, uploaded_filename)
+                log.info('full_filename: ' + full_filename)
+
+                try:
+                    # Checking the old file and remove it.
+                    if os.path.exists(full_filename):
+                        os.remove(full_filename)
+
+                    fout = open(full_filename, 'wb+')
+
+                    file_content = ContentFile(request.FILES['email_data'].read())
+
+                    # Iterate through the chunks.
+
+                    for chunk in file_content.chunks():
+                        fout.write(chunk)
+                    fout.close()
+                    messages.success(request, "Uploaded the file successfully: %s" % request.FILES['email_data'].name)
+                except Exception as e:
+                    log.error("[Email Data] %s" % e)
+                    messages.error(request, e)
+
+        else:
+            messages.error(request, form.errors)
+
+    form = CustomerMailDataForm()
+
+    context = {
+        'form': form,
+    }
+    return render(request, "mail_data_add.html", context)
+
+@login_required
+def mail_data_list(request):
+    """View the email data set list.
+
+    Args:
+    Returns:
+    """
+    # Search keyword
+    search = request.session.get('search')
+    user_id = request.session.get('user_name')
+
+    if not search:
+        search = {}
+    if not user_id:
+        user_id = {}
+    email_datas = CustomerMailData.objects.all()
+
+    if request.method == 'POST':
+        print(request.POST)
+        if 'edit' in request.POST:
+            email_data = CustomerMailData.objects.filter(id=request.POST.get('id')).first()
+            if request.POST.get('data_name') != '':
+                email_data.data_name = request.POST.get('data_name')
+                email_data.save()
+                email_data = CustomerMailData.objects.all()
+            else:
+                messages.error(request, 'The data name can\'t be the empty.')
+            return redirect('mail_data_list')
+        else:
+            if request.POST.get('search[keyword]'):
+                search['keyword'] = request.POST.get('search[keyword]')
+            else:
+                search['keyword'] = None
+            request.session['search'] = search
+            if request.POST.get('user_name'):
+                user_id['keyword'] = request.POST.get('user_name')
+            else:
+                user_id['keyword'] = None
+            request.session['user_name'] = user_id
+
+            return redirect('mail_data_list')
+
+    if search.get('keyword'):
+        email_datas = email_datas.filter(data_name__contains=search.get('keyword'))
+    if user_id.get('keyword') and user_id.get('keyword') != '0':
+        email_datas = email_datas.filter(user_id=user_id.get('keyword'))
+
+    users = User.objects.all()
+    context = {
+        'search': search,
+        'users': users,
+        'email_data': email_datas,
+        'user_name': int(user_id.get('keyword') or 0),
+    }
+
+    return render(request, "mail_data_list.html", context)
+
+@login_required
+def mail_data_delete(request, id):
+    """Delete the mail data set by id
+
+    Args
+        id: id of mail data set
+    Returns
+    """
+
+    if id == 0:
+        CustomerMailData.objects.all().delete()
+        messages.success(request, 'All files were deleted successfully.')
+        return redirect('mail_data_list')
+    mail_data = CustomerMailData.objects.filter(id=id).first()
+    data_name = mail_data.data_name
+    mail_data.delete()
+    messages.success(request, 'The mail data: %s was deleted successfully.' % data_name)
+
+    return redirect('mail_data_list')

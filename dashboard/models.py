@@ -78,6 +78,21 @@ class MailUserCredential(models.Model):
         verbose_name_plural = 'User\'s credentials'
 
 
+class CustomerMailData(models.Model):
+    """User to Gmail API credential Map Model
+
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
+    email_data = models.FileField()
+    data_name = models.TextField()
+
+    class Meta:
+        db_table = 'customer_mail_data_list'
+
+        verbose_name = 'Customer Email Data'
+        verbose_name_plural = 'Customer Email Data'
+
+
 class FakeModel(object):
     class _meta:
         app_label = 'dashboard'  # This is the app that the form will exist under

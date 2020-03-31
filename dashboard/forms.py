@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import validate_email
 from django.contrib.auth.models import User
 
-from .models import MailAccount, MailUserCredential
+from .models import MailAccount, MailUserCredential, CustomerMailData
 
 
 class MailAccountForm(forms.ModelForm):
@@ -60,6 +60,46 @@ class MailUserCredentialForm(forms.ModelForm):
             'project_id',
             'client_id',
             'client_secret',
+        }
+
+
+class CustomerMailDataForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        cls = {
+            'class': 'form-control'
+        }
+        for field_name in self.fields:
+            self.fields[field_name].widget.attrs.update(cls)
+
+    def clean(self):
+        clean_data = super(CustomerMailDataForm, self).clean()
+        file = clean_data.get('email_data')
+        if file:
+            filename = file.name
+            if not filename.endswith('.xlsx') and not filename.endswith('.xls') \
+               and not filename.endswith('.csv') and not filename.endswith('.txt'):
+                self.add_error('email_data', 'The file format must be one of xlsx, xls, csv, txt.')
+
+    def email_data_link(self):
+        if self.credential:
+            return "<a href='%s'>download</a>" % (self.email_data.url,)
+        else:
+            return "No attachment"
+
+    email_data_link.allow_tags = True
+
+    class Meta:
+        model = CustomerMailData
+        widgets = {
+            'data_name': forms.TextInput(),
+
+        }
+        fields = {
+            'email_data',
+            'data_name',
         }
 
 

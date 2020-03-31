@@ -55,15 +55,15 @@
 
     <!-- Nav Item - Pages Collapse Menu -->
     <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="fas fa-fw fa-envelope-open"></i>
-            <span>Email Template</span></a>
+        <a class="nav-link" href="{% url 'mail_data_list' %}">
+            <i class="fas fa-fw fa-list"></i>
+            <span>Email Data List</span></a>
+        <a class="nav-link" href="{% url 'mail_data_add' %}">
+            <i class="fas fa-fw fa-plus-square"></i>
+            <span>Add Email Data</span></a>
         <a class="nav-link" href="{% url 'mail_send' %}">
             <i class="fas fa-fw fa-location-arrow"></i>
             <span>Send Email</span></a>
-        <a class="nav-link" href="#">
-            <i class="fas fa-fw fa-file-upload"></i>
-            <span>Upload Attachment</span></a>
     </li>
     {% endif %}
 

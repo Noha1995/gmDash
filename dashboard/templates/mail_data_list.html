@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}Email Data List{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Email Data List</h1>
+        {% if user.is_superuser %}
+            <a href="{% url 'mail_data_add' %}"
+               class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus-circle fa-sm text-white-50"></i> Add
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="card shadow mb-2">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-7">
+                    <form role="form" class="user form-inline" method="post" action="{% url 'mail_data_list' %}">{% csrf_token %}
+                        <label for="search_keyword" class="mr-sm-2">Keyword: </label>
+                        <input name="search[keyword]" id="search_keyword" class="form-control" value="{{ search.keyword | default_if_none:"" }}"/>
+                        <select name="user_name" id="user_name" class="form-control ml-3" value="{{ user_name }}">
+                            <option value="0">-- All --</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}"
+                            {% if user_name.keyword != "all" and user.id == user_name %}
+                                {{ "selected" }}
+                            {% endif %}>{{ user.username }}</option>
+                            {% endfor %}
+
+                        </select>
+                        <button type="submit" class="btn btn-primary ml-4"><i class="fa fa-search"></i> Search</button>
+                        <button type="button" class="btn btn-light ml-4 btn-reset"><i class="fa fa-search-minus"></i> Reset</button>
+                    </form>
+                </div>
+                <div class="col-md-5">
+{#                    <button type="submit" class="btn btn-danger float-right" disabled id="btn-delete-inbox"><i class="fa fa-trash"></i> Delete Inbox</button>#}
+                    <a class="btn btn-danger float-right" href="{% url 'mail_data_delete' 0 %}" ><i class="fa fa-trash"></i> Delete All</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form role="form" class="user form-inline" id="form-delete-message" method="post" action="{% url 'inbox_delete_all_on_accounts' %}">{% csrf_token %}
+                <input type="hidden" id="delete_type" name="delete_type" value="0">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <td width="50">
+                                <input type="checkbox" class="form-control fc-check ids-checkall" id="ids-checkall"/>
+                            </td>
+                            <td width="50" class="text-center">No</td>
+                            {% if user.is_superuser %}
+                                <th class="text-center">User</th>
+                            {% endif %}
+                            <th class="text-center">Data Name</th>
+                            <th class="text-center">Data File</th>
+
+                            <th class="text-center">-</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        {% for data in email_data %}
+                            <tr>
+                                <td>
+                                    <input name="ids[]" id="ids_{{ data.id }}" type="checkbox" value="{{ data.id }}" class="form-control fc-check ids-check"/>
+                                </td>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                {% if user.is_superuser %}
+                                    <td class="text-center">
+                                        {{ data.user.username }}
+                                    </td>
+                                {% endif %}
+                                <td class="text-center">
+                                    {{ data.data_name }}
+                                </td>
+                                <td class="text-center">
+                                    {{ data.email_data }}
+                                </td>
+
+                                <td class="text-center">
+                                    <a href="#"
+                                       data-href="{{ request.path }}"
+                                       class="btn btn-primary btn-circle btn-sm btn-edit"
+                                       data-id="{{ data.id }}"
+                                       data-toggle="modal"
+                                       data-target="#confirm-edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if user.is_superuser %}
+                                        |
+                                        <a href="#"
+                                           data-href="mail_data_delete/{{ data.id }}"
+                                           class="btn btn-danger btn-circle btn-sm btn-del"
+                                           data-toggle="modal"
+                                           data-target="#confirm-delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <script>
+            $(document).ready(function () {
+                $('#btn-delete-inbox').click(function(e){
+                    e.preventDefault();
+                    $('#confirm-message-delete').modal();
+                });
+                $('#btn-delete-account').click(function(e){
+                    e.preventDefault();
+                    $('#confirm-account-delete').modal();
+                });
+                $('#confirm-message-delete .btn-ok').click(function(e){
+                    e.preventDefault();
+                    $("#form-delete-message #delete_type").val("0");
+                    $("#form-delete-message").submit();
+                });
+
+                $('#confirm-account-delete .btn-ok').click(function(e){
+                    e.preventDefault();
+                    $("#form-delete-message #delete_type").val("1");
+                    $("#form-delete-message").submit();
+                });
+
+                $('#confirm-edit .btn-ok').click(function(e){
+                    e.preventDefault();
+                    $("#form-data-edit").submit();
+                });
+
+                $('#confirm-delete').on('show.bs.modal', function (e) {
+                    $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+                });
+                $('#confirm-edit').on('show.bs.modal', function (e) {
+                    $(this).find('#id').val($(e.relatedTarget).data('id'));
+                });
+
+                $(".btn-reset").click(function (e) {
+                    let form = $(this).closest('form');
+                    form.find('#search_keyword').val('');
+                    form.find('#user_name').val('0');
+                    form.submit();
+                });
+            });
+        </script>
+        <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Delete the registered mail data on the system
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete?
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-danger btn-ok">Delete</a>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="confirm-edit" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <form id="form-data-edit" action="{{ request.path }}" method="post">{% csrf_token %}
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Update the registered mail data name on the system
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to update?</p>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="col-md-4">
+                                    <label class="col-form-control mt-1">Data Name</label>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" id="data_name" name="data_name" class="form-control" required>
+                                </div>
+                            </div>
+                            <input type="hidden" id="id" name="id" required>
+                            <input type="hidden" name="edit" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-primary btn-ok">Update</a>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            </form>
+        </div>
+        <div class="modal fade" id="confirm-message-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Delete accounts from list
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete all messages?
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-danger btn-ok" href="#">Delete All</a>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="confirm-account-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        Delete all messages from inbox
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete the selected accounts?
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-danger btn-ok" href="#">Delete All</a>
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

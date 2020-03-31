@@ -22,4 +22,7 @@ api_credentials/*
 
 apps.log
 
+email_data
+!email_data/.gitkeeper
+
 

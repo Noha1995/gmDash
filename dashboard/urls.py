@@ -30,6 +30,9 @@ urlpatterns = [
     # ============= Mail Message Function
     path('inbox_delete_all_on_accounts', views.inbox_delete_all_on_accounts, name='inbox_delete_all_on_accounts'),
     path('mail_send', views.mail_send, name='mail_send'),
+    path('mail_data_add', views.mail_data_add, name='mail_data_add'),
+    path('mail_data_list', views.mail_data_list, name='mail_data_list'),
+    path('mail_data_delete/<int:id>', views.mail_data_delete, name='mail_data_delete'),
 
     # ============= API Credential Function
     path('get_gmail_auth/<int:id>', views.get_gmail_auth),
