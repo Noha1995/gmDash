@@ -19,13 +19,14 @@ from .forms import MailAccountForm, FilterActionForm, FilterCriteriaForm, MailAc
     MailUserCredentialForm, CustomerMailDataForm
 from dashboard import gapi
 import time
+import math
 import datetime
 from .agent import Agent
 
 from django.contrib import messages
 from django.conf import settings
-
 import json, csv
+import pandas as pd
 
 log = logging.getLogger('django')
 
@@ -1037,6 +1038,7 @@ def mail_send(request):
     Returns:
     """
     accounts = MailAccount.get_active_mail_accounts(Agent.dashboard_user(request))
+    customer_data = CustomerMailData.objects.all()
     context = {
         'filter_emails': ''
     }
@@ -1047,14 +1049,42 @@ def mail_send(request):
             if request.POST.get('filter_emails').strip() != '':
                 emails = request.POST.get('filter_emails').strip().splitlines()
                 accounts = MailAccount.get_active_mail_accounts(Agent.dashboard_user(request)).filter(
-                    email__in=emails).all()
+                    sender_name__in=emails).all()
         else:
             emails_applied = request.POST.getlist('emails_applied[]')
-            to_emails = request.POST.get('to_email')
-            to_emails = to_emails.strip().splitlines()
+            email_data_id = request.POST.get('to_email')
+            print(email_data_id)
+            email_data = CustomerMailData.objects.filter(id=email_data_id).first()
+            to_emails = []
+            if email_data.email_data.name.endswith('.xlsx'):
+                df = pd.read_excel(os.path.join(settings.EMAILDATA_BASE_PATH, str(email_data.id)+'_'+email_data.email_data.name), sheet_name=0, header=None)
+                file_data = df.to_dict()[0]
+                to_emails = [file_data[item] for item in file_data]
+
+            elif email_data.email_data.name.endswith('.xls'):
+                df = pd.read_excel(os.path.join(settings.EMAILDATA_BASE_PATH, str(email_data.id)+'_'+email_data.email_data.name), sheet_name=0, header=None)
+                file_data = df.to_dict()[0]
+                to_emails = [file_data[item] for item in file_data]
+
+            elif email_data.email_data.name.endswith('.csv'):
+                df = pd.read_csv(os.path.join(settings.EMAILDATA_BASE_PATH, str(email_data.id)+'_'+email_data.email_data.name), header=None)
+                file_data = df.to_dict()[0]
+                to_emails = [file_data[item] for item in file_data]
+
+            elif email_data.email_data.name.endswith('.txt'):
+                df = pd.read_csv(os.path.join(settings.EMAILDATA_BASE_PATH, str(email_data.id)+'_'+email_data.email_data.name), header=None)
+                file_data = df.to_dict()[0]
+                to_emails = [file_data[item] for item in file_data]
+
+            # to_emails = to_emails.strip().splitlines()
             subject = request.POST.get('subject')
             message = request.POST.get('message')
-            if len(emails_applied) < 1 or subject == '' or len(to_emails) < 1 or message == '':
+            frequency = int(request.POST.get('frequency'))
+            recipient_emails = request.POST.get('recipient_emails')
+            recipient_emails = recipient_emails.strip().split(',')
+
+            if len(emails_applied) < 1 or subject == '' or len(to_emails) < 1\
+                or message == '' or len(recipient_emails) < 1:
                 if len(emails_applied) < 1:
                     messages.error(request, "Please select an email account at least.")
                 if len(to_emails) < 1:
@@ -1063,15 +1093,36 @@ def mail_send(request):
                     messages.error(request, "Please input subject.")
                 if message == '':
                     messages.error(request, "Please input message.")
+                if len(recipient_emails) < 1:
+                    messages.error(request, "Please input recipient emails.")
+            elif len(emails_applied)*settings.MAIL_SEND_LIMIT_PER_DAY < (len(to_emails) + math.ceil((len(to_emails)*len(recipient_emails))/frequency)):
+                messages.error(request, "The emails can\'t be sent by the selected emails.")
             else:
-
-                for email in emails_applied:
-                    account = MailAccount.objects.filter(email=email).first()
+                mail_num = 0
+                success_cnt = 0
+                fail_cnt = 0
+                sender_pos = 0
+                for i in range(len(to_emails)):
+                    if mail_num != 0 and mail_num % settings.MAIL_SEND_LIMIT_PER_DAY == 0:
+                        sender_pos += 1
+                    account = MailAccount.objects.filter(email=emails_applied[sender_pos]).first()
                     if account and account.user_id:
                         credentials = gapi.get_stored_credentials(account.user_id)
                         if credentials and credentials.refresh_token is not None:
                             try:
-                                result = gapi.GapiUsersMessages.send(request, credentials, email, to_emails, subject, message)
+                                result = gapi.GapiUsersMessages.send(request, credentials, emails_applied[sender_pos], to_emails[i], subject, message)
+                                if result and result.get('id'):
+                                    messages.success(request, 'Sent message to %s successfully. Num: %s' %
+                                                     (to_emails[i], i+1))
+                                    log.info('Sent message to %s successfully. Num: %s' %
+                                             (to_emails[i], i+1))
+                                    success_cnt += 1
+                                else:
+                                    fail_cnt += 1
+                                    messages.error(request, 'Failed to Send message to %s. Num: %s' %
+                                                   (to_emails[i], i+1))
+                                    log.error('Failed to Send message to %s. Num: %s' %
+                                              (to_emails[i], i+1))
                             except HttpError as e:
                                 log.error(e.__str__())
                                 resp_str = e.content.decode(encoding="utf-8")
@@ -1085,9 +1136,76 @@ def mail_send(request):
                                         messages.error(request,
                                                        "Failed to send message on " + account.email + "." + errors[0].get(
                                                            'message'))
+                                fail_cnt += 1
+                                messages.error(request, 'Failed to Send message to %s' %
+                                               to_emails[i])
+                                log.error('Failed to Send message to %s. Num: %s' %
+                                          (to_emails[i], i+1))
+                                print('An error occurred on %s: %s' % (to_emails[i], e))
+
                             except oauth2client.client.HttpAccessTokenRefreshError as e1:
                                 log.error("Failed to send message on %s. Details: %s" % (account.email, str(e1)))
                                 show_invalid_access_token(request, account.email, account.id)
+                            mail_num += 1
+
+                            print(emails_applied[sender_pos], to_emails[i], i, frequency, (i+1)%frequency)
+                            if (i+1) % frequency == 0:
+                                for recipient in recipient_emails:
+                                    if mail_num != 0 and mail_num % settings.MAIL_SEND_LIMIT_PER_DAY == 0:
+                                        sender_pos += 1
+                                    account = MailAccount.objects.filter(email=emails_applied[sender_pos]).first()
+                                    if account and account.user_id:
+                                        credentials = gapi.get_stored_credentials(account.user_id)
+                                        if credentials and credentials.refresh_token is not None:
+                                            try:
+                                                result = gapi.GapiUsersMessages.send(request, credentials,
+                                                                                     emails_applied[sender_pos],
+                                                                                     recipient.strip(), 'Sending Process',
+                                                                                     'Checking frequency: %s' % frequency)
+                                                if result and result.get('id'):
+                                                    messages.info(request,
+                                                                     'Sent the check message to %s successfully.' %
+                                                                     recipient.strip())
+                                                    log.info('Sent the check message to %s successfully.' %
+                                                             recipient.strip())
+                                                else:
+                                                    messages.warning(request, 'Failed to Send the check message to %s.' %
+                                                                   recipient)
+                                                    log.error('Failed to Send message to %s.' %
+                                                              recipient)
+                                            except HttpError as e:
+                                                log.error(e.__str__())
+                                                resp_str = e.content.decode(encoding="utf-8")
+                                                error = json.loads(resp_str)
+                                                error = error.get('error')
+                                                if error and error.get('errors'):
+                                                    errors = error.get('errors')
+                                                    if errors:
+                                                        log.error(
+                                                            "Failed to send message on " + account.email + "." + errors[
+                                                                0].get('message'))
+                                                        messages.warning(request,
+                                                                       "Failed to send message on " + account.email + "." +
+                                                                       errors[0].get(
+                                                                           'message'))
+                                                messages.warning(request, 'Failed to Send the check message to %s' %
+                                                               recipient)
+                                                log.error('Failed to Send the check message to %s. ' %
+                                                          recipient)
+                                                print('An error occurred on %s: %s' % (to_emails[i], e))
+
+                                            except oauth2client.client.HttpAccessTokenRefreshError as e1:
+                                                    log.error("Failed to send message on %s. Details: %s" % (
+                                                    account.email, str(e1)))
+                                                    show_invalid_access_token(request, account.email, account.id)
+                                            mail_num += 1
+                                        else:
+                                            show_no_credential_msg(account.email, account.id)
+                                            log.error('no credential for %s' % account.email)
+                                    else:
+                                        show_no_credential_msg(account.email, account.id)
+                                        log.error('no credential for %s' % account.email)
+
                         else:
                             show_no_credential_msg(account.email, account.id)
                             log.error('no credential for %s' % account.email)
@@ -1095,9 +1213,8 @@ def mail_send(request):
                         show_no_credential_msg(account.email, account.id)
                         log.error('no credential for %s' % account.email)
 
-
-
     context['accounts'] = accounts
+    context['customer_data'] = customer_data
 
     return render(request, "mail_send.html", context)
 
@@ -1429,12 +1546,30 @@ def mail_data_delete(request, id):
     """
 
     if id == 0:
-        CustomerMailData.objects.all().delete()
-        messages.success(request, 'All files were deleted successfully.')
+        data_list = CustomerMailData.objects.all()
+        for file in data_list:
+            filepath = os.path.join(settings.EMAILDATA_BASE_PATH, str(file.id) + '_' + file.email_data.name)
+
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                CustomerMailData.objects.filter(id=file.id).delete()
+                messages.success(request, 'The file: %s were deleted successfully.' % file.email_data.name)
+            except Exception as e:
+                print(e)
+                messages.success(request, 'Failed to delete the file: %s.' % file.email_data.name)
+
         return redirect('mail_data_list')
     mail_data = CustomerMailData.objects.filter(id=id).first()
     data_name = mail_data.data_name
-    mail_data.delete()
-    messages.success(request, 'The mail data: %s was deleted successfully.' % data_name)
+    try:
+        filepath = os.path.join(settings.EMAILDATA_BASE_PATH, str(mail_data.id) + '_' + mail_data.email_data.name)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        mail_data.delete()
+        messages.success(request, 'The mail data: %s was deleted successfully.' % data_name)
+    except Exception as e:
+        print(e)
+        messages.error(request, 'Failed to delete the mail data: %s.' % data_name)
 
     return redirect('mail_data_list')

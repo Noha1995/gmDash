@@ -128,6 +128,10 @@ LOGOUT_REDIRECT_URL = '/accounts/login'
 CLIENTSECRETS_BASE_PATH = os.path.join(BASE_DIR, 'api_credentials')
 EMAILDATA_BASE_PATH = os.path.join(BASE_DIR, 'email_data')
 CLIENTSECRETS_LOCATION = os.path.join(BASE_DIR, 'credentials.json')  # will not be used.
+"""
+    Gmail API Usage Limit
+"""
+MAIL_SEND_LIMIT_PER_DAY = 500
 
 GAPI_REDIRECT_URL = '/dashboard/gmail_auth_callback'
 

@@ -391,7 +391,9 @@ class GapiUsersMessages(GapiWrap):
         Returns:
           An object containing a base64url encoded email object.
         """
-        message = MIMEText(message_text)
+        print(message_text)
+        message = MIMEText(message_text, 'html')
+        print(message)
         message['to'] = to
         message['from'] = sender
         message['subject'] = subject
@@ -452,7 +454,7 @@ class GapiUsersMessages(GapiWrap):
         return {'raw': base64.urlsafe_b64encode(message.as_string())}
 
     @staticmethod
-    def send(request, credentials, sender, to_emails, subject, message_data):
+    def send(request, credentials, sender, user_id, subject, message_data):
         """Send an email message.
 
         Args:
@@ -464,55 +466,13 @@ class GapiUsersMessages(GapiWrap):
         Returns:
           Sent Message.
         """
-        results = []
         gmail_service = build_service(credentials)
-        success_cnt = 0
-        fail_cnt = 0
-        cnt = 0
-        num = 0
-        for user_id in to_emails:
-            num += 1
-            cnt += 1
-            if cnt >= 4:
-                cnt = 0
-                time.sleep(1)
-            try:
-                message_text = GapiUsersMessages.create_message(sender, user_id.strip(), subject, message_data)
-                message = (gmail_service.users().messages().send(userId=sender, body=message_text)
-                           .execute())
+        message_text = GapiUsersMessages.create_message(sender, user_id.strip(), subject, message_data)
+        message = (gmail_service.users().messages().send(userId=sender, body=message_text)
+                   .execute())
 
-                print('Message Id: %s, Num: %s' % (message['id'], num))
-                results.append(message)
-                if message and message.get('id'):
-                    messages.success(request, 'Sent message to %s successfully. Num: %s' %
-                                     (user_id, num))
-                    log.info('Sent message to %s successfully. Num: %s' %
-                             (user_id, num))
-                    success_cnt += 1
-                else:
-                    fail_cnt += 1
-                    messages.error(request, 'Failed to Send message to %s. Num: %s' %
-                                   (user_id, num))
-                    log.error('Failed to Send message to %s. Num: %s' %
-                              (user_id, num))
-            except errors.HttpError as error:
-                fail_cnt += 1
-                messages.error(request, 'Failed to Send message to %s: %s' %
-                               (user_id, error.__str__()))
-                log.error('Failed to Send message to %s. Num: %s' %
-                          (user_id, num))
-                print('An error occurred on %s: %s' % (user_id, error))
-            except Exception as e:
-                print(e)
-
-        if success_cnt > 0:
-            messages.success(request, 'Send message emails from %s successfully: %s' %
-                             (sender, str(success_cnt)))
-
-        if fail_cnt > 0:
-            messages.error(request, 'Failed to send message from %s: %s' % (sender, str(fail_cnt)))
-        print(success_cnt, fail_cnt, cnt)
-        return results
+        print('Message Id: %s' % message['id'])
+        return message
 
     @staticmethod
     def list():

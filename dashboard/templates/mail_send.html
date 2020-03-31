@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}Send Email{% endblock %}
 
 {% block content %}
@@ -16,19 +16,57 @@
                         <input type="text" class="form-control" name="subject" id="subject"/>
                     </div>
                 </div>
+{#                <div class="form-group row">#}
+{#                    <label for="name" class="offset-2 col-sm-2 col-form-label">To</label>#}
+{#                    <div class="col-sm-6">#}
+{#                        <textarea type="text" class="form-control" name="to_email" id="to_email"></textarea>#}
+{#                        <div class="help">#}
+{#                            Please specify the linebreak separated emails.#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
                 <div class="form-group row">
                     <label for="name" class="offset-2 col-sm-2 col-form-label">To</label>
                     <div class="col-sm-6">
-                        <textarea type="text" class="form-control" name="to_email" id="to_email"></textarea>
+                        <select name="to_email" id="to_email" class="form-control">
+                            {% for customer in customer_data %}
+                            <option value="{{ customer.id }}">{{ customer.data_name }}</option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row" style="display: none">
+                    <label for="name" class="offset-2 col-sm-2 col-form-label">Message</label>
+                    <div class="col-sm-6">
+                        <textarea type="text" class="form-control" name="message" id="message"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="name" class="offset-2 col-sm-2 col-form-label">Message</label>
+                    <div class="col-sm-6">
+                        <div id="txtEditor"></div>
+
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="name" class="offset-2 col-sm-2 col-form-label">Frequency</label>
+                    <div class="col-sm-6">
+                        <input type="number" min="0" step="1" class="form-control" name="frequency" id="frequency"/>
                         <div class="help">
-                            Please specify the linebreak separated emails.
+                            Please specify Integer.
                         </div>
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="name" class="offset-2 col-sm-2 col-form-label">Message</label>
+                    <label for="name" class="offset-2 col-sm-2 col-form-label">Recipients Emails</label>
                     <div class="col-sm-6">
-                        <textarea type="text" class="form-control" name="message" id="message"></textarea>
+                        <input type="text" class="form-control" name="recipient_emails" id="recipient_emails"/>
+                        <div class="help">
+                            Please specify the comma separated emails.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -39,13 +77,13 @@
                 <div class="row">
                     <div class="col-md-6" style="display: flex">
                         <label class="col-form-label ml-3">From:</label>
-{#                        <input type="checkbox" name="apply_all" id="apply_all" value="1"#}
-{#                               class="form-control fc-check ml-5"/>#}
-{#                        <label for="apply_all" class="col-form-label ml-3">Select All</label>#}
+                        <input type="checkbox" name="apply_all" id="apply_all" value="1"
+                               class="form-control fc-check ml-5" style="display:none;"/>
+                        <label for="apply_all" class="col-form-label ml-3" style="display: none">Select All</label>
                     </div>
                     <div class="col-md-6">
                         <div class="float-right">
-                            <button type="submit" class="btn btn-primary btn-sm btn-set-sender"><i class="fa fa-save"></i>
+                            <button type="button" class="btn btn-primary btn-sm btn-set-sender"><i class="fa fa-save"></i>
                                 Submit
                             </button>
                             <a href="{% url 'mail_accounts' %}"
@@ -59,11 +97,11 @@
                         <input class="form-control" id="filter_emails" name="filter_emails" value="{{ filter_emails }}">
                     </div>
                     <div class="col-md-6">
-                        <button type="button" class="btn btn-primary btn-sm btn-email-search"><i class="fa fa-search"></i>
+                        <button type="button" class="btn btn-primary btn-sm btn-email-search pull-left"><i class="fa fa-search"></i>
                             Search
                         </button>
                         <a href="#"
-                               class="btn btn-light btn-sm pull-right btn-clear-search"><i class="fa fa-minus-circle"></i>Reset</a>
+                               class="btn btn-light btn-sm pull-left btn-clear-search"><i class="fa fa-minus-circle"></i>Reset</a>
                     </div>
 
                 </div>
@@ -96,6 +134,20 @@
       });
       $('.btn-set-sender').on('click', function (e) {
         $('#filter_by_email').val(0);
+        let emails = $('#recipient_emails').val().trim().split(',');
+
+        for(let i=0; i<emails.length; i++){
+          if(ValidateEmail(emails[i].trim()) == false){
+            alert('Please specify the recipient emails.')
+            return 0;
+          }
+        }
+        if(parseFloat($('#frequency').val()) != parseInt($('#frequency').val())){
+            return 0;
+        }
+        console.log(editor_content.html.get());
+
+        $('#message').text(editor_content.html.get());
         $('form').submit();
       });
       $('.btn-clear-search').on('click', function (e) {
@@ -103,6 +155,70 @@
         $('#filter_emails').val('');
         $('form').submit();
       });
-    })
+      //Email Validation function
+      function ValidateEmail(mail)
+      {
+        if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail))
+        {
+          return true;
+        }
+        return false;
+      }
+      //Text Editor
+      let editor_content = '';
+      (function () {
+          editor_content = new FroalaEditor("#txtEditor", {
+            fullPage: true
+          })
+      })();
+
+    });
 </script>
+
+{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="{% static 'plugins/editor-master/css/froala_editor.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/editor-master/css/froala_style.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/code_view.css' %}">
+<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/colors.css' %}">
+{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/emoticons.css' %}">#}
+{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/image_manager.css' %}">#}
+{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/image.css' %}">#}
+<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/line_breaker.css' %}">
+{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/table.css' %}">#}
+<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/char_counter.css' %}">
+{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/video.css' %}">#}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.css">
+{% endblock %}
+{% block page_js %}
+<script type="text/javascript"
+src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.js"></script>
+<script type="text/javascript"
+src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/mode/xml/xml.min.js"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/froala_editor.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/align.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/code_beautifier.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/code_view.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/colors.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/draggable.min.js' %}"></script>
+{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/emoticons.min.js' %}"></script>#}
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/font_size.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/font_family.min.js' %}"></script>
+{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/image.min.js' %}"></script>#}
+{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/image_manager.min.js' %}"></script>#}
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/line_breaker.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/link.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/lists.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/paragraph_format.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/paragraph_style.min.js' %}"></script>
+{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/table.min.js' %}"></script>#}
+{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/video.min.js' %}"></script>#}
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/url.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/entities.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/char_counter.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/inline_style.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/save.min.js' %}"></script>
+
 {% endblock %}
