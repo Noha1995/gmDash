@@ -49,4 +49,60 @@ $(document).ready(function () {
     // -----------------------------------------------------------------------------
     // End of Apply To function
     // -----------------------------------------------------------------------------
+
 });
+var pageAlert = function (type='', duration=3000, content='') {
+    let id;
+    switch (type) {
+        case "primary": {
+            id = setInterval(stopAlert, duration);
+            $('#alert-wraper').append(
+              "<div id=\""+ id +"\" class=\"alert alert-primary\" role=\"alert\">\n" +
+              content +
+              "</div>"
+            );
+            break;
+        }
+        case "secondary": {
+            id = setInterval(stopAlert, duration);
+            $('#alert-wraper').append(
+              "<div id=\""+ id +"\" class=\"alert alert-secondary\" role=\"alert\">\n" +
+              content +
+              "</div>"
+            );
+            break;
+        }
+        case "success": {
+            id = setInterval(stopAlert, duration);
+            $('#alert-wraper').append(
+              "<div id=\""+ id +"\" class=\"alert alert-success\" role=\"alert\">\n" +
+              content +
+              "</div>"
+            );
+            break;
+        }
+        case "danger": {
+            id = setInterval(stopAlert, duration);
+            $('#alert-wraper').append(
+              "<div id=\""+ id +"\" class=\"alert alert-danger\" role=\"alert\">\n" +
+              content +
+              "</div>"
+            );
+            break;
+        }
+        case "warning": {
+            id = setInterval(stopAlert, duration);
+            $('#alert-wraper').append(
+              "<div id=\""+ id +"\" class=\"alert alert-warning\" role=\"alert\">\n" +
+              content +
+              "</div>"
+            );
+            break;
+        }
+
+    }
+    function stopAlert() {
+        clearInterval(id);
+        $(`#alert-wraper #${id}`).remove();
+    }
+}

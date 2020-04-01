@@ -16,3 +16,11 @@ form input.fc-check{
 	display: inline;
 	width: 25px !important;
 }
+.page-alert{
+	display: inline;
+	position: fixed;
+	right: 0;
+	top: 0;
+	z-index: 1000;
+	padding-top: 10px;
+}

@@ -46,7 +46,14 @@
                 <div class="form-group row">
                     <label for="name" class="offset-2 col-sm-2 col-form-label">Message</label>
                     <div class="col-sm-6">
-                        <div id="txtEditor"></div>
+                        <div id="msg_switch" class="text-right">
+                            <a href="#" id="modal-toggle" class="btn btn-primary btn-sm"><i class="fa fa-code"></i></a>
+                        </div>
+                        <div id="txtEditor" class="mt-1">
+                            <textarea class="form-control" id="msg_edit">
+
+                            </textarea>
+                        </div>
 
                     </div>
                 </div>
@@ -125,9 +132,51 @@
             </div>
         </div>
     </form>
+<div class="modal fade" id="msg_content" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 style="color:red;"><span class="glyphicon glyphicon-lock"></span> Email Preview</h4>
+        </div>
+        <div class="modal-body">
+
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-default btn-primary" data-dismiss="modal">
+                <span class="glyphicon glyphicon-remove"></span> Cancel</button>
+
+        </div>
+      </div>
+    </div>
+</div>
+
+<div role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false">
+  <div class="toast-header">
+    <svg class=" rounded mr-2" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid slice" focusable="false" role="img">
+      <rect fill="#007aff" width="100%" height="100%" /></svg>
+    <strong class="mr-auto">Bootstrap</strong>
+    <small>11 mins ago</small>
+    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="toast-body">
+    Hello, world! This is a toast message.
+  </div>
+</div>
 
 <script>
     $(document).ready(function () {
+
+      $('#modal-toggle').on('click', function (e) {
+        e.preventDefault();
+
+        $('#msg_content .modal-body').html($('#msg_edit').val());
+        $('#msg_content').modal();
+      })
       $('.btn-email-search').on('click', function (e) {
         $('#filter_by_email').val(1);
         $('form').submit();
@@ -138,16 +187,19 @@
 
         for(let i=0; i<emails.length; i++){
           if(ValidateEmail(emails[i].trim()) == false){
-            alert('Please specify the recipient emails.')
+            //alert('Please specify the recipient emails.')
+            pageAlert('danger', 3000, 'Please specify the recipient emails.');
             return 0;
           }
         }
         if(parseFloat($('#frequency').val()) != parseInt($('#frequency').val())){
+            pageAlert('danger', 3000, 'Please input Integer in the frequency field.');
             return 0;
         }
-        console.log(editor_content.html.get());
 
-        $('#message').text(editor_content.html.get());
+        //$('#message').text(editor_content.html.get());
+        $('#message').text($('#msg_edit').innerHTML);
+
         $('form').submit();
       });
       $('.btn-clear-search').on('click', function (e) {
@@ -165,60 +217,14 @@
         return false;
       }
       //Text Editor
-      let editor_content = '';
-      (function () {
-          editor_content = new FroalaEditor("#txtEditor", {
-            fullPage: true
-          })
-      })();
+      //let editor_content = '';
+      //(function () {
+      //    editor_content = new FroalaEditor("#txtEditor", {
+      //      fullPage: true
+      //    })
+      //})();
 
     });
 </script>
-
-{% endblock %}
-
-{% block page_css %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="{% static 'plugins/editor-master/css/froala_editor.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/editor-master/css/froala_style.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/code_view.css' %}">
-<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/colors.css' %}">
-{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/emoticons.css' %}">#}
-{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/image_manager.css' %}">#}
-{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/image.css' %}">#}
-<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/line_breaker.css' %}">
-{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/table.css' %}">#}
-<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/char_counter.css' %}">
-{#<link rel="stylesheet" href="{% static 'plugins/editor-master/css/plugins/video.css' %}">#}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.css">
-{% endblock %}
-{% block page_js %}
-<script type="text/javascript"
-src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.js"></script>
-<script type="text/javascript"
-src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/mode/xml/xml.min.js"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/froala_editor.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/align.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/code_beautifier.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/code_view.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/colors.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/draggable.min.js' %}"></script>
-{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/emoticons.min.js' %}"></script>#}
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/font_size.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/font_family.min.js' %}"></script>
-{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/image.min.js' %}"></script>#}
-{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/image_manager.min.js' %}"></script>#}
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/line_breaker.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/link.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/lists.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/paragraph_format.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/paragraph_style.min.js' %}"></script>
-{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/table.min.js' %}"></script>#}
-{#<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/video.min.js' %}"></script>#}
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/url.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/entities.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/char_counter.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/inline_style.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'plugins/editor-master/js/plugins/save.min.js' %}"></script>
 
 {% endblock %}
