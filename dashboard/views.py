@@ -1464,6 +1464,41 @@ def mail_data_add(request):
                     for chunk in file_content.chunks():
                         fout.write(chunk)
                     fout.close()
+
+                    #Email Numbers
+                    #request.FILES['email_data'].name
+                    if request.FILES['email_data'].name.endswith('.xlsx'):
+                        df = pd.read_excel(os.path.join(settings.EMAILDATA_BASE_PATH, full_filename),
+                                           sheet_name=0, header=None)
+                        file_data = df.to_dict()[0]
+                        to_emails = [file_data[item] for item in file_data]
+                        customer_data.data_num = len(to_emails)
+                        customer_data.save()
+
+                    elif request.FILES['email_data'].name.endswith('.xls'):
+                        df = pd.read_excel(os.path.join(settings.EMAILDATA_BASE_PATH, full_filename),
+                                           sheet_name=0, header=None)
+                        file_data = df.to_dict()[0]
+                        to_emails = [file_data[item] for item in file_data]
+                        customer_data.data_num = len(to_emails)
+                        customer_data.save()
+
+                    elif request.FILES['email_data'].name.endswith('.csv'):
+                        df = pd.read_csv(os.path.join(settings.EMAILDATA_BASE_PATH, full_filename),
+                                         header=None)
+                        file_data = df.to_dict()[0]
+                        to_emails = [file_data[item] for item in file_data]
+                        customer_data.data_num = len(to_emails)
+                        customer_data.save()
+
+                    elif request.FILES['email_data'].name.endswith('.txt'):
+                        df = pd.read_csv(os.path.join(settings.EMAILDATA_BASE_PATH, full_filename),
+                                         header=None)
+                        file_data = df.to_dict()[0]
+                        to_emails = [file_data[item] for item in file_data]
+                        customer_data.data_num = len(to_emails)
+                        customer_data.save()
+
                     messages.success(request, "Uploaded the file successfully: %s" % request.FILES['email_data'].name)
                 except Exception as e:
                     log.error("[Email Data] %s" % e)

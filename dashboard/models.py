@@ -85,6 +85,7 @@ class CustomerMailData(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE)
     email_data = models.FileField()
     data_name = models.TextField()
+    data_num = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'customer_mail_data_list'
